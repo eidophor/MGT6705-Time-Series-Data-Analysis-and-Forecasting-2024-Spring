@@ -1,0 +1,59 @@
+#추후 지울 수도 있음
+# 다중 로지스틱 회귀 모형에 대한 분석 
+logit_model = multinom(quality ~ ., data = train_set, family = "multinomial")
+sink(tempfile()) 
+logit_model = stepAIC(logit_model, direction="both" ,trace=F)
+sink()
+result = predict(logit_model, test_set)
+
+# 예측된 클래스와 실제 클래스를 비교하여 정확도를 계산합니다.
+result_numeric <- as.numeric(result)
+quality_numeric <- as.numeric(test_set$quality)
+accuracy = mean(result_numeric == quality_numeric)
+
+# 정확도를 출력합니다.
+print(paste("Multinomial Regression model Accuracy:", accuracy))
+
+#Wald 통계량(Wald statistics)을 통해서 변수의 중요도 분석(값이 클수록 유의한 변수)
+wald_test = Anova(logit_model, type = "II")
+print(wald_test)
+p_multinomial <- c(0.068218, 2.327e-15, 0.029943, 0.030628, 0.061397, 1.272e-09, 0.004426, 7.478e-08, 2.2e-16)
+adjusted_p_multinomial <- p.adjust(p_multinomial, method = "bonferroni")  
+print(adjusted_p_multinomial)
+
+# Null Deviance와 Residual Deviance를 확인합니다.
+summary(logit_model)
+
+# StepAIC의 결과에서 Wald 통계검사결과로 유의한 변수만 선택한 경우
+final_model = multinom(quality ~ volatile_acidity+citric_acid+chlorides+total_sulfur_dioxide+pH+sulphates+alcohol, data = train_set, family = "multinomial")
+final_result = as.numeric(predict(final_model, test_set))
+print(paste("Multinomial Regression model Accuracy:", mean(final_result == quality_numeric)))
+summary(final_model)
+wald_test2 = Anova(final_model, type = "II")
+print(wald_test2)
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Ordinal regression 방법의 교차검증 모델(여기서 probit 활용법도 찾아볼것)
+model <- train(
+  quality ~ fixed_acidity+volatile_acidity+citric_acid+residual_sugar+chlorides+total_sulfur_dioxide+density+sulphates+alcohol,  
+  data = train_set,  # 데이터셋 지정
+  method = "polr",  
+  trControl = trainControl(method = "cv", number = 10)  # 교차 검증 (10-fold)
+)
+
+result4 = predict(model, test_set)
+print(paste("Cross Validated Ordinal Model Accuracy:", mean(as.numeric(result4) == quality_numeric)))
+print("The result is same.")
+
+

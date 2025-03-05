@@ -1,0 +1,570 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+
+\begin{document}
+---
+title: "Time Series Data Analysis and Forecasting (Capstone Design) Mid-term paper"
+author: "20190741 Jeesoo, Kim"
+date: "2024-04-13"
+output: pdf_document
+header-includes:
+    - \usepackage[utf8]{inputenc}
+---
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(dplyr)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: 패키지 'dplyr'는 R 버전 4.2.3에서 작성되었습니다
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## 다음의 패키지를 부착합니다: 'dplyr'
+\end{verbatim}
+
+\begin{verbatim}
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+\end{verbatim}
+
+\begin{verbatim}
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(MASS)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: 패키지 'MASS'는 R 버전 4.2.3에서 작성되었습니다
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## 다음의 패키지를 부착합니다: 'MASS'
+\end{verbatim}
+
+\begin{verbatim}
+## The following object is masked from 'package:dplyr':
+## 
+##     select
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(corrplot)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: 패키지 'corrplot'는 R 버전 4.2.3에서 작성되었습니다
+\end{verbatim}
+
+\begin{verbatim}
+## corrplot 0.92 loaded
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(nnet)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: 패키지 'nnet'는 R 버전 4.2.3에서 작성되었습니다
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(olsrr)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: 패키지 'olsrr'는 R 버전 4.2.3에서 작성되었습니다
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## 다음의 패키지를 부착합니다: 'olsrr'
+\end{verbatim}
+
+\begin{verbatim}
+## The following object is masked from 'package:MASS':
+## 
+##     cement
+\end{verbatim}
+
+\begin{verbatim}
+## The following object is masked from 'package:datasets':
+## 
+##     rivers
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(car)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: 패키지 'car'는 R 버전 4.2.3에서 작성되었습니다
+\end{verbatim}
+
+\begin{verbatim}
+## 필요한 패키지를 로딩중입니다: carData
+\end{verbatim}
+
+\begin{verbatim}
+## Warning: 패키지 'carData'는 R 버전 4.2.3에서 작성되었습니다
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## 다음의 패키지를 부착합니다: 'car'
+\end{verbatim}
+
+\begin{verbatim}
+## The following object is masked from 'package:dplyr':
+## 
+##     recode
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{local}\NormalTok{(\{}
+\NormalTok{  hook\_inline }\OtherTok{=}\NormalTok{ knitr}\SpecialCharTok{::}\NormalTok{knit\_hooks}\SpecialCharTok{$}\FunctionTok{get}\NormalTok{(}\StringTok{\textquotesingle{}inline\textquotesingle{}}\NormalTok{)}
+\NormalTok{  knitr}\SpecialCharTok{::}\NormalTok{knit\_hooks}\SpecialCharTok{$}\FunctionTok{set}\NormalTok{(}\AttributeTok{inline =} \ControlFlowTok{function}\NormalTok{(x) \{}
+\NormalTok{    res }\OtherTok{=} \FunctionTok{hook\_inline}\NormalTok{(x)}
+    \ControlFlowTok{if}\NormalTok{ (}\FunctionTok{is.numeric}\NormalTok{(x)) }\FunctionTok{sprintf}\NormalTok{(}\StringTok{\textquotesingle{}$\%s$\textquotesingle{}}\NormalTok{, res) }\ControlFlowTok{else}\NormalTok{ res}
+\NormalTok{  \})}
+\NormalTok{\})}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{file\_path }\OtherTok{\textless{}{-}} \StringTok{"C:/Users/admin/Desktop/wine.csv"}
+\NormalTok{data }\OtherTok{=} \FunctionTok{read.csv}\NormalTok{(file\_path, }\AttributeTok{h=}\NormalTok{T)}
+\NormalTok{data }\OtherTok{=} \FunctionTok{as.data.frame}\NormalTok{(data)}
+\FunctionTok{head}\NormalTok{(data)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   fixed_acidity volatile_acidity citric_acid residual_sugar chlorides
+## 1           7.4             0.70        0.00            1.9     0.076
+## 2           7.8             0.88        0.00            2.6     0.098
+## 3           7.8             0.76        0.04            2.3     0.092
+## 4          11.2             0.28        0.56            1.9     0.075
+## 5           7.4             0.70        0.00            1.9     0.076
+## 6           7.4             0.66        0.00            1.8     0.075
+##   free_sulfur_dioxide total_sulfur_dioxide density   pH sulphates alcohol
+## 1                  11                   34  0.9978 3.51      0.56     9.4
+## 2                  25                   67  0.9968 3.20      0.68     9.8
+## 3                  15                   54  0.9970 3.26      0.65     9.8
+## 4                  17                   60  0.9980 3.16      0.58     9.8
+## 5                  11                   34  0.9978 3.51      0.56     9.4
+## 6                  13                   40  0.9978 3.51      0.56     9.4
+##   quality
+## 1       5
+## 2       5
+## 3       5
+## 4       6
+## 5       5
+## 6       5
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{head}\NormalTok{(data)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   fixed_acidity volatile_acidity citric_acid residual_sugar chlorides
+## 1           7.4             0.70        0.00            1.9     0.076
+## 2           7.8             0.88        0.00            2.6     0.098
+## 3           7.8             0.76        0.04            2.3     0.092
+## 4          11.2             0.28        0.56            1.9     0.075
+## 5           7.4             0.70        0.00            1.9     0.076
+## 6           7.4             0.66        0.00            1.8     0.075
+##   free_sulfur_dioxide total_sulfur_dioxide density   pH sulphates alcohol
+## 1                  11                   34  0.9978 3.51      0.56     9.4
+## 2                  25                   67  0.9968 3.20      0.68     9.8
+## 3                  15                   54  0.9970 3.26      0.65     9.8
+## 4                  17                   60  0.9980 3.16      0.58     9.8
+## 5                  11                   34  0.9978 3.51      0.56     9.4
+## 6                  13                   40  0.9978 3.51      0.56     9.4
+##   quality
+## 1       5
+## 2       5
+## 3       5
+## 4       6
+## 5       5
+## 6       5
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(data)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##  fixed_acidity   volatile_acidity  citric_acid    residual_sugar  
+##  Min.   : 4.60   Min.   :0.1200   Min.   :0.000   Min.   : 0.900  
+##  1st Qu.: 7.10   1st Qu.:0.3900   1st Qu.:0.090   1st Qu.: 1.900  
+##  Median : 7.90   Median :0.5200   Median :0.260   Median : 2.200  
+##  Mean   : 8.32   Mean   :0.5278   Mean   :0.271   Mean   : 2.539  
+##  3rd Qu.: 9.20   3rd Qu.:0.6400   3rd Qu.:0.420   3rd Qu.: 2.600  
+##  Max.   :15.90   Max.   :1.5800   Max.   :1.000   Max.   :15.500  
+##    chlorides       free_sulfur_dioxide total_sulfur_dioxide    density      
+##  Min.   :0.01200   Min.   : 1.00       Min.   :  6.00       Min.   :0.9901  
+##  1st Qu.:0.07000   1st Qu.: 7.00       1st Qu.: 22.00       1st Qu.:0.9956  
+##  Median :0.07900   Median :14.00       Median : 38.00       Median :0.9968  
+##  Mean   :0.08747   Mean   :15.87       Mean   : 46.47       Mean   :0.9967  
+##  3rd Qu.:0.09000   3rd Qu.:21.00       3rd Qu.: 62.00       3rd Qu.:0.9978  
+##  Max.   :0.61100   Max.   :72.00       Max.   :289.00       Max.   :1.0037  
+##        pH          sulphates         alcohol         quality     
+##  Min.   :2.740   Min.   :0.3300   Min.   : 8.40   Min.   :3.000  
+##  1st Qu.:3.210   1st Qu.:0.5500   1st Qu.: 9.50   1st Qu.:5.000  
+##  Median :3.310   Median :0.6200   Median :10.20   Median :6.000  
+##  Mean   :3.311   Mean   :0.6581   Mean   :10.42   Mean   :5.636  
+##  3rd Qu.:3.400   3rd Qu.:0.7300   3rd Qu.:11.10   3rd Qu.:6.000  
+##  Max.   :4.010   Max.   :2.0000   Max.   :14.90   Max.   :8.000
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{cor\_mat }\OtherTok{=} \FunctionTok{cor}\NormalTok{(data)}
+\FunctionTok{corrplot}\NormalTok{(cor\_mat, }\AttributeTok{method =} \StringTok{"number"}\NormalTok{, }\AttributeTok{type =} \StringTok{"upper"}\NormalTok{, }
+         \AttributeTok{tl.cex =} \FloatTok{0.8}\NormalTok{, }\AttributeTok{tl.col =} \StringTok{"black"}\NormalTok{, }
+         \AttributeTok{addCoef.col =} \StringTok{"black"}\NormalTok{, }\AttributeTok{number.cex =} \FloatTok{0.8}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Midterm-Project_files/figure-latex/unnamed-chunk-5-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# 모델링에 필요한 변수를 선택}
+\NormalTok{selected\_vars }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"fixed\_acidity"}\NormalTok{, }\StringTok{"volatile\_acidity"}\NormalTok{, }\StringTok{"citric\_acid"}\NormalTok{, }\StringTok{"residual\_sugar"}\NormalTok{, }\StringTok{"chlorides"}\NormalTok{, }\StringTok{"free\_sulfur\_dioxide"}\NormalTok{, }\StringTok{"total\_sulfur\_dioxide"}\NormalTok{, }\StringTok{"density"}\NormalTok{, }\StringTok{"pH"}\NormalTok{, }\StringTok{"sulphates"}\NormalTok{, }\StringTok{"alcohol"}\NormalTok{)}
+\NormalTok{data\_selected }\OtherTok{\textless{}{-}}\NormalTok{ data[, selected\_vars]}
+
+
+\CommentTok{\# 최종 모델을 구축}
+\NormalTok{linear\_model }\OtherTok{\textless{}{-}} \FunctionTok{stepAIC}\NormalTok{(}\FunctionTok{lm}\NormalTok{(data}\SpecialCharTok{$}\NormalTok{quality }\SpecialCharTok{\textasciitilde{}}\NormalTok{ ., }\AttributeTok{data =}\NormalTok{ data\_selected), }\AttributeTok{direction =} \StringTok{"both"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Start:  AIC=-1375.49
+## data$quality ~ fixed_acidity + volatile_acidity + citric_acid + 
+##     residual_sugar + chlorides + free_sulfur_dioxide + total_sulfur_dioxide + 
+##     density + pH + sulphates + alcohol
+## 
+##                        Df Sum of Sq    RSS     AIC
+## - density               1     0.287 666.70 -1376.8
+## - fixed_acidity         1     0.389 666.80 -1376.5
+## - residual_sugar        1     0.498 666.91 -1376.3
+## - citric_acid           1     0.646 667.06 -1375.9
+## <none>                              666.41 -1375.5
+## - free_sulfur_dioxide   1     1.694 668.10 -1373.4
+## - pH                    1     1.957 668.37 -1372.8
+## - chlorides             1     8.391 674.80 -1357.5
+## - total_sulfur_dioxide  1     8.427 674.84 -1357.4
+## - sulphates             1    26.971 693.38 -1314.0
+## - volatile_acidity      1    33.620 700.03 -1298.8
+## - alcohol               1    45.672 712.08 -1271.5
+## 
+## Step:  AIC=-1376.8
+## data$quality ~ fixed_acidity + volatile_acidity + citric_acid + 
+##     residual_sugar + chlorides + free_sulfur_dioxide + total_sulfur_dioxide + 
+##     pH + sulphates + alcohol
+## 
+##                        Df Sum of Sq    RSS     AIC
+## - fixed_acidity         1     0.108 666.81 -1378.5
+## - residual_sugar        1     0.231 666.93 -1378.2
+## - citric_acid           1     0.654 667.35 -1377.2
+## <none>                              666.70 -1376.8
+## + density               1     0.287 666.41 -1375.5
+## - free_sulfur_dioxide   1     1.829 668.53 -1374.4
+## - pH                    1     4.325 671.02 -1368.5
+## - total_sulfur_dioxide  1     8.728 675.43 -1358.0
+## - chlorides             1     8.761 675.46 -1357.9
+## - sulphates             1    27.287 693.98 -1314.7
+## - volatile_acidity      1    35.000 701.70 -1297.0
+## - alcohol               1   119.669 786.37 -1114.8
+## 
+## Step:  AIC=-1378.54
+## data$quality ~ volatile_acidity + citric_acid + residual_sugar + 
+##     chlorides + free_sulfur_dioxide + total_sulfur_dioxide + 
+##     pH + sulphates + alcohol
+## 
+##                        Df Sum of Sq    RSS     AIC
+## - residual_sugar        1     0.257 667.06 -1379.9
+## - citric_acid           1     0.565 667.37 -1379.2
+## <none>                              666.81 -1378.5
+## + fixed_acidity         1     0.108 666.70 -1376.8
+## + density               1     0.005 666.80 -1376.5
+## - free_sulfur_dioxide   1     1.901 668.71 -1376.0
+## - pH                    1     7.065 673.87 -1363.7
+## - chlorides             1     9.940 676.75 -1356.9
+## - total_sulfur_dioxide  1    10.031 676.84 -1356.7
+## - sulphates             1    27.673 694.48 -1315.5
+## - volatile_acidity      1    36.234 703.04 -1295.9
+## - alcohol               1   120.633 787.44 -1114.7
+## 
+## Step:  AIC=-1379.93
+## data$quality ~ volatile_acidity + citric_acid + chlorides + free_sulfur_dioxide + 
+##     total_sulfur_dioxide + pH + sulphates + alcohol
+## 
+##                        Df Sum of Sq    RSS     AIC
+## - citric_acid           1     0.475 667.54 -1380.8
+## <none>                              667.06 -1379.9
+## + residual_sugar        1     0.257 666.81 -1378.5
+## + fixed_acidity         1     0.133 666.93 -1378.2
+## + density               1     0.028 667.03 -1378.0
+## - free_sulfur_dioxide   1     2.064 669.13 -1377.0
+## - pH                    1     7.138 674.20 -1364.9
+## - total_sulfur_dioxide  1     9.828 676.89 -1358.5
+## - chlorides             1     9.832 676.89 -1358.5
+## - sulphates             1    27.446 694.51 -1317.5
+## - volatile_acidity      1    35.977 703.04 -1297.9
+## - alcohol               1   122.667 789.73 -1112.0
+## 
+## Step:  AIC=-1380.79
+## data$quality ~ volatile_acidity + chlorides + free_sulfur_dioxide + 
+##     total_sulfur_dioxide + pH + sulphates + alcohol
+## 
+##                        Df Sum of Sq    RSS     AIC
+## <none>                              667.54 -1380.8
+## + citric_acid           1     0.475 667.06 -1379.9
+## + residual_sugar        1     0.167 667.37 -1379.2
+## + density               1     0.031 667.51 -1378.9
+## + fixed_acidity         1     0.007 667.53 -1378.8
+## - free_sulfur_dioxide   1     2.394 669.93 -1377.1
+## - pH                    1     7.073 674.61 -1365.9
+## - total_sulfur_dioxide  1    10.787 678.32 -1357.2
+## - chlorides             1    10.809 678.35 -1357.1
+## - sulphates             1    27.060 694.60 -1319.2
+## - volatile_acidity      1    42.318 709.85 -1284.5
+## - alcohol               1   124.483 792.02 -1109.4
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# 다중공선성 점검 (VIF 계산)}
+\NormalTok{vif }\OtherTok{\textless{}{-}}\NormalTok{ car}\SpecialCharTok{::}\FunctionTok{vif}\NormalTok{(linear\_model)}
+\NormalTok{vif}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##     volatile_acidity            chlorides  free_sulfur_dioxide 
+##             1.241819             1.333333             1.882706 
+## total_sulfur_dioxide                   pH            sulphates 
+##             1.943920             1.254570             1.321931 
+##              alcohol 
+##             1.220157
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# 다중공선성이 높은 변수 확인}
+\NormalTok{high\_vif\_vars }\OtherTok{\textless{}{-}} \FunctionTok{names}\NormalTok{(vif)[vif }\SpecialCharTok{\textgreater{}} \DecValTok{5}\NormalTok{]}
+
+\CommentTok{\# 각 모델의 결과 출력}
+\FunctionTok{summary}\NormalTok{(linear\_model)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = data$quality ~ volatile_acidity + chlorides + free_sulfur_dioxide + 
+##     total_sulfur_dioxide + pH + sulphates + alcohol, data = data_selected)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -2.68918 -0.36757 -0.04653  0.46081  2.02954 
+## 
+## Coefficients:
+##                        Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)           4.4300987  0.4029168  10.995  < 2e-16 ***
+## volatile_acidity     -1.0127527  0.1008429 -10.043  < 2e-16 ***
+## chlorides            -2.0178138  0.3975417  -5.076 4.31e-07 ***
+## free_sulfur_dioxide   0.0050774  0.0021255   2.389    0.017 *  
+## total_sulfur_dioxide -0.0034822  0.0006868  -5.070 4.43e-07 ***
+## pH                   -0.4826614  0.1175581  -4.106 4.23e-05 ***
+## sulphates             0.8826651  0.1099084   8.031 1.86e-15 ***
+## alcohol               0.2893028  0.0167958  17.225  < 2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.6477 on 1591 degrees of freedom
+## Multiple R-squared:  0.3595, Adjusted R-squared:  0.3567 
+## F-statistic: 127.6 on 7 and 1591 DF,  p-value: < 2.2e-16
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# 영향점을 확인하기 위해서 분석을 실시}
+\FunctionTok{par}\NormalTok{(}\AttributeTok{mfrow =} \FunctionTok{c}\NormalTok{(}\DecValTok{2}\NormalTok{, }\DecValTok{2}\NormalTok{))}
+\FunctionTok{plot}\NormalTok{(linear\_model)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Midterm-Project_files/figure-latex/unnamed-chunk-6-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{index }\OtherTok{=} \DecValTok{2}\SpecialCharTok{:}\DecValTok{1200}
+\NormalTok{train\_set }\OtherTok{=}\NormalTok{ data[index, ]}
+\NormalTok{test\_set }\OtherTok{=}\NormalTok{ data[}\SpecialCharTok{{-}}\NormalTok{index, ]}
+\FunctionTok{dim}\NormalTok{(train\_set)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 1199   12
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{train\_set }\OtherTok{=} \FunctionTok{model.matrix}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ ., }\AttributeTok{data =}\NormalTok{ train\_set)}
+\NormalTok{test\_set }\OtherTok{=} \FunctionTok{model.matrix}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ ., }\AttributeTok{data =}\NormalTok{ test\_set)}
+
+\NormalTok{train\_set }\OtherTok{=} \FunctionTok{as.data.frame}\NormalTok{(train\_set)}
+\NormalTok{test\_set }\OtherTok{=} \FunctionTok{as.data.frame}\NormalTok{(test\_set)}
+
+\NormalTok{logit\_model }\OtherTok{=} \FunctionTok{multinom}\NormalTok{(quality }\SpecialCharTok{\textasciitilde{}}\NormalTok{ ., }\AttributeTok{data =}\NormalTok{ train\_set, }\AttributeTok{family =} \StringTok{"multinomial"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # weights:  84 (65 variable)
+## initial  value 2148.319604 
+## iter  10 value 1476.995898
+## iter  20 value 1324.573447
+## iter  30 value 1141.694872
+## iter  40 value 1095.314310
+## iter  50 value 1087.908973
+## iter  60 value 1085.261873
+## iter  70 value 1083.342120
+## iter  80 value 1080.919330
+## iter  90 value 1080.003800
+## iter 100 value 1079.495469
+## final  value 1079.495469 
+## stopped after 100 iterations
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{result }\OtherTok{=} \FunctionTok{predict}\NormalTok{(logit\_model, test\_set)}
+
+\CommentTok{\# 예측된 클래스와 실제 클래스를 비교하여 정확도를 계산합니다.}
+\NormalTok{accuracy }\OtherTok{=} \FunctionTok{mean}\NormalTok{(result }\SpecialCharTok{==}\NormalTok{ test\_set}\SpecialCharTok{$}\NormalTok{quality)}
+
+\CommentTok{\# 정확도를 출력합니다.}
+\FunctionTok{print}\NormalTok{(}\FunctionTok{paste}\NormalTok{(}\StringTok{"Accuracy:"}\NormalTok{, accuracy))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Accuracy: 0.62"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#Wald 통계량(Wald statistics)을 통해서 변수의 중요도 분석(값이 클수록 유의한 변수)}
+\NormalTok{wald\_test }\OtherTok{=} \FunctionTok{Anova}\NormalTok{(logit\_model, }\AttributeTok{type =} \StringTok{"II"}\NormalTok{)}
+\FunctionTok{print}\NormalTok{(wald\_test)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Analysis of Deviance Table (Type II tests)
+## 
+## Response: quality
+##                      LR Chisq Df Pr(>Chisq)    
+## `(Intercept)`           0.237  5   0.998664    
+## fixed_acidity          12.688  5   0.026483 *  
+## volatile_acidity       75.799  5  6.337e-15 ***
+## citric_acid            12.503  5   0.028510 *  
+## residual_sugar         11.025  5   0.050889 .  
+## chlorides              13.057  5   0.022853 *  
+## free_sulfur_dioxide    10.105  5   0.072319 .  
+## total_sulfur_dioxide   50.656  5  1.017e-09 ***
+## density                 3.511  5   0.621688    
+## pH                     19.497  5   0.001553 ** 
+## sulphates              43.410  5  3.051e-08 ***
+## alcohol               120.587  5  < 2.2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Null Deviance와 Residual Deviance를 확인합니다.}
+\FunctionTok{summary}\NormalTok{(logit\_model)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Call:
+## multinom(formula = quality ~ ., data = train_set, family = "multinomial")
+## 
+## Coefficients:
+##   (Intercept) `(Intercept)` fixed_acidity volatile_acidity citric_acid
+## 4    39.44058      39.44058     -1.915551        -8.957668   -13.23123
+## 5    25.25974      25.25974     -2.069496       -12.581161   -13.54104
+## 6    24.60422      24.60422     -1.949939       -15.624495   -15.18643
+## 7    50.84367      50.84367     -1.846267       -17.783419   -15.03430
+## 8    37.25741      37.25741     -2.289382       -13.126311   -11.48272
+##   residual_sugar chlorides free_sulfur_dioxide total_sulfur_dioxide  density
+## 4     -0.8769236 -16.68200          -0.2331070            0.1781645 18.40041
+## 5     -0.8453675 -19.56747          -0.2515257            0.1970993 63.82155
+## 6     -0.8885286 -22.05531          -0.2227812            0.1778284 58.37882
+## 7     -0.6542197 -28.64052          -0.2237474            0.1696854 -4.22165
+## 8     -0.7304015 -58.65076          -0.2089912            0.1560022 34.88323
+##          pH sulphates  alcohol
+## 4 -30.49790  2.645916 3.574837
+## 5 -32.86475  1.554668 3.325489
+## 6 -33.11515  3.529700 4.116453
+## 7 -33.24102  5.921576 4.828294
+## 8 -39.53390  7.222793 5.543974
+## 
+## Std. Errors:
+##   (Intercept) `(Intercept)` fixed_acidity volatile_acidity citric_acid
+## 4    2.127828      2.127828     0.3601781         1.371087   1.4146042
+## 5    1.284191      1.284191     0.3217050         1.188565   0.8695245
+## 6    1.225561      1.225561     0.3206000         1.186303   0.8371920
+## 7    1.411569      1.411569     0.3253988         1.308421   0.9833905
+## 8    3.205040      3.205040     0.4119381         2.285921   2.3291154
+##   residual_sugar chlorides free_sulfur_dioxide total_sulfur_dioxide  density
+## 4      0.3500972 3.0362470           0.1142292           0.06483920 2.071252
+## 5      0.3066525 1.7310095           0.1115942           0.06433887 1.260834
+## 6      0.3068184 1.7327910           0.1114385           0.06433659 1.202478
+## 7      0.3059853 3.0576321           0.1121162           0.06452775 1.380569
+## 8      0.4000886 0.6736162           0.1205741           0.06723932 3.131441
+##         pH sulphates   alcohol
+## 4 2.522276 1.3957841 0.7049226
+## 5 2.085886 1.0044673 0.6785685
+## 6 2.066290 0.9754919 0.6789301
+## 7 2.132232 1.0198605 0.6824357
+## 8 3.136771 1.6039478 0.7468484
+## 
+## Residual Deviance: 2158.991 
+## AIC: 2278.991
+\end{verbatim}
